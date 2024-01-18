@@ -1,0 +1,131 @@
+﻿@page "/"
+@layout FlatLayout
+@inject NavigationManager NavigationManager
+@inject IAuthenticationService authService
+
+@inject ISnackbar snackBar
+
+<MudGrid>
+    <MudItem xs="12" Class="d-flex justify-center">
+        <MudItem xs="8">
+            <MudCard Elevation="15" Class="pa-10">
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h4" Align="Align.Center">Authenticatiosssn</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudGrid>
+                        <MudItem xs="12" Class="d-flex justify-center">
+
+                            <MudItem>
+                                <MudTextField Class="mb-4" @bind-Value="Username" Label="Username" Variant="Variant.Filled"></MudTextField>
+                                <MudTextField @bind-Value="Password"
+                                              InputType="@PasswordInput"
+                                              Label="Password" Variant="Variant.Filled"
+                                              Adornment="Adornment.End"
+                                              AdornmentIcon="@PasswordInputIcon"
+                                              OnAdornmentClick="ShowPasswordButton"
+                                              AdornmentAriaLabel="Show Password"></MudTextField>
+
+                            </MudItem>
+                        </MudItem>
+                    </MudGrid>
+                </MudCardContent>
+                <MudCardActions Class="d-flex justify-end ">
+                    @if (ButtonLoadingState)
+                    {
+                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                    }
+                    else
+                    {
+                        <MudButton Variant="Variant.Filled"
+                                   @onclick="@Login"
+                                   Class="mx-3" Color="Color.Primary">Login</MudButton>
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary">Sign-up</MudButton>
+
+                    }
+                </MudCardActions>
+            </MudCard>
+
+        </MudItem>
+    </MudItem>
+</MudGrid>
+<span>@test</span>
+
+@code {
+    // [Inject]
+    // public AuthenticationService authService { get; set; }
+
+
+    public string Username { get; set; }
+    public string Password { get; set; }
+    public string test { get; set; }
+
+    bool ButtonLoadingState = false;
+
+
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+
+
+
+    protected override void OnInitialized()
+    {
+        
+
+        base.OnInitialized();
+    }
+
+
+
+    async Task Login()
+    {
+        ButtonLoadingState = true;
+        try
+        {
+            var token = await this.authService.Login(this.Username, this.Password);
+            Console.WriteLine("Received Token: " + token.Token);
+
+            // redirect to Counter page on successful login
+            NavigationManager.NavigateTo("/Counter");
+
+            snackBar.Add("Loging Successful", Severity.Success, options =>
+            {
+                options.HideTransitionDuration = 100; options.ShowTransitionDuration = 100;
+                options.VisibleStateDuration = 1000;
+            });
+        }
+        catch (Exception e)
+        {
+            ButtonLoadingState = false;
+            snackBar.Add("Wrong Username or Password", Severity.Error, options =>
+            {
+                options.HideTransitionDuration = 100; options.ShowTransitionDuration = 100;
+                options.VisibleStateDuration = 1000;
+            });
+            Console.WriteLine(e.Message);
+        }
+    }
+
+
+
+
+    void ShowPasswordButton()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
+}

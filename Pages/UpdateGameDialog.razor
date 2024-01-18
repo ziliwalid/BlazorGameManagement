@@ -1,0 +1,81 @@
+﻿@inject HttpClient httpClient
+@using frontendApi.Models
+
+<MudDialog>
+    <DialogContent>
+        @if (GameToUpdate == null || IsEditMode)
+        {
+            <MudTextField Label="Name" @bind-Value="updatedName"></MudTextField>
+            <MudTextField Label="Genre" @bind-Value="updatedGenre"></MudTextField>
+        }
+        @ChildContent
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancel</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Submit">
+            @if (GameToUpdate == null)
+            {
+                <text>Add</text>
+            }
+            else
+            {
+                <text>Update</text>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public Game GameToUpdate { get; set; }
+    [Parameter] public bool IsEditMode { get; set; } // Add this property
+
+    private string updatedName;
+    private string updatedGenre;
+
+    // Set initial values for update
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Set initial values for update
+        updatedName = GameToUpdate?.Name;
+        updatedGenre = GameToUpdate?.Genre;
+    }
+
+    async Task Submit()
+    {
+        try
+        {
+            // Create an updated game object
+            var updatedGame = new Game
+                {
+                    Id = GameToUpdate?.Id ?? 0, // If null (Add), set to 0
+                    Name = updatedName,
+                    Genre = updatedGenre
+                };
+
+            if (GameToUpdate == null)
+            {
+                // Make an API call to add a new game
+                await httpClient.PostAsJsonAsync("api/App/games", updatedGame);
+            }
+            else
+            {
+                // Make an API call to update the game
+                await httpClient.PutAsJsonAsync($"api/App/games/{GameToUpdate.Id}", updatedGame);
+            }
+
+            // Close the dialog
+            MudDialog.Close(DialogResult.Ok(updatedGame));
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}
